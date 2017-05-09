@@ -32,8 +32,7 @@ def gethtmjs(skill, time_period):
 def getjobs():
     soup = Soup(gethtmjs(skill='python', time_period='day'))
     for lnk in soup.find_all('a', {"class": "standardJobUrl"}):
-        if (
-                                    'data' in lnk.text or 'Data' in lnk.text or 'BI' in lnk.text or 'Business' in lnk.text or 'business' in lnk.text or 'analytics' in lnk.text or 'Analytics' in lnk.text):
+        if ('data' in lnk.text or 'Data' in lnk.text or 'BI' in lnk.text or 'Business' in lnk.text or 'business' in lnk.text or 'analytics' in lnk.text or 'Analytics' in lnk.text):
             if 'senior' not in lnk.text and 'Senior' not in lnk.text and 'lead' not in lnk.text and 'Lead' not in lnk.text:
                 print(lnk.text + '\t' + lnk['href'])
 
