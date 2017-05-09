@@ -4,15 +4,15 @@ from selenium.common.exceptions import NoSuchElementException, NoSuchWindowExcep
 from bs4 import BeautifulSoup
 import time
 
-Soup = lambda htm: BeautifulSoup(htm,'html.parser')
-chromedriver = "./chromedriver"
-time_periods = ['month','day']
+lang = ['You fluently speak English and German']
 
-URL="https://www.thelocal.de/jobs/Berlin/all/python?date_posted=day"
+Soup = lambda htm: BeautifulSoup(htm, 'html.parser')
 
-def gethtm():
+
+def gethtmjs(skill, time_period):
+    URL = "https://www.thelocal.de/jobs/Berlin/all/" + skill + "?date_posted=" + time_period
     try:
-        driver = webdriver.Chrome(chromedriver)
+        driver = webdriver.PhantomJS(service_args=['--ignore-ssl-errors=true', '--ssl-protocol=any'])
         driver.get(URL)
 
         while True:
@@ -28,11 +28,19 @@ def gethtm():
     except NoSuchWindowException:
         sys.exit('The window closed unexpectedly.')
 
+
 def getjobs():
-    soup = Soup(gethtm())
-    for lnk in soup.find_all('a', { "class" : "standardJobUrl" }):
-        if ('data' in lnk.text or 'Data' in lnk.text or 'BI' in lnk.text or 'Business' in lnk.text or 'business' in lnk.text or 'analytics' in lnk.text or 'Analytics' in lnk.text):
+    soup = Soup(gethtmjs(skill='python', time_period='day'))
+    for lnk in soup.find_all('a', {"class": "standardJobUrl"}):
+        if (
+                                    'data' in lnk.text or 'Data' in lnk.text or 'BI' in lnk.text or 'Business' in lnk.text or 'business' in lnk.text or 'analytics' in lnk.text or 'Analytics' in lnk.text):
             if 'senior' not in lnk.text and 'Senior' not in lnk.text and 'lead' not in lnk.text and 'Lead' not in lnk.text:
-                print(lnk['href'])
+                print(lnk.text + '\t' + lnk['href'])
+
+    soup = Soup(gethtmjs(skill='sql', time_period='day'))
+    for lnk in soup.find_all('a', {"class": "standardJobUrl"}):
+        if 'senior' not in lnk.text and 'Senior' not in lnk.text and 'lead' not in lnk.text and 'Lead' not in lnk.text:
+            print(lnk.text + '\t' + lnk['href'])
+
 
 getjobs()
