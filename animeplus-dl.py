@@ -10,14 +10,10 @@ URL = "http://www.animeplus.tv"
 
 def gethtml(link):
     time.sleep(1)
-    try:
-        req = urllib2.Request(link, headers={'User-Agent': "Magic Browser"})
-        con = urllib2.urlopen(req)
-        html = con.read()
-        return html
-    except Exception, e:
-        logging.error('Unhandled exception: %s', e)
-        sys.exit(0)
+    req = urllib2.Request(link, headers={'User-Agent': "Magic Browser"})
+    con = urllib2.urlopen(req)
+    html = con.read()
+    return html
 
 
 def getflvs(nm, ep_num):
