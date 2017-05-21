@@ -1,26 +1,62 @@
+#!/usr/bin/env python
+# -- coding: utf-8 --
+
 from bs4 import BeautifulSoup
-import urllib2, time, re, sys
-import logging
-logging.basicConfig(level=logging.DEBUG,
-                            format='%(asctime)s %(name)s[%(funcName)s] %(message)s')
+import urllib2, time, re, sys, argparse
 
 Soup = lambda htm: BeautifulSoup(htm, 'html.parser')
 
 URL = "http://www.animeplus.tv"
 
+
+class Color:
+    BEG = '\033['
+    SEP = ';'
+    BOLD = '1'
+    RED = '31'
+    GREEN = '32'
+    YELLOW = '33'
+    END_BEG = 'm'
+    END = '\033[0m'
+
+def printClr(string, *args):
+    # we have to work backwards
+    string = Color.END_BEG + string
+
+    fst = False
+    for arg in args:
+        if(fst is False):
+            string = arg + string
+            fst = True
+            continue
+
+        string = Color.SEP + string
+        string = arg + string
+
+    string = Color.BEG + string
+    print(string + Color.END)
+
 def gethtml(link):
     time.sleep(1)
-    req = urllib2.Request(link, headers={'User-Agent': "Magic Browser"})
-    con = urllib2.urlopen(req)
-    html = con.read()
-    return html
+    try:
+        req = urllib2.Request(link, headers={'User-Agent': "Magic Browser"})
+        con = urllib2.urlopen(req)
+        html = con.read()
+        return html
+    except urllib2.HTTPError as e:
+        if e.code == 404:
+            printClr("No such series or episode!! Please check!!\n" +
+                     link, Color.RED, Color.BOLD)
+        else:
+            printClr("Error in connection ", link, Color.RED, Color.BOLD)
+        sys.exit()
 
 
-def getflvs(nm, ep_num):
+def get_video_links(nm, ep_num):
     nm = nm.lower()
     ep_num = ep_num.lower()
     link = 'http://www.animeplus.tv/'+'-'.join(nm.split(' '))+'-episode-'+'-'.join(ep_num.split(' '))+'-online'
-    logging.info('Searching %s', link)
+    printClr('Searching \n'+ link, Color.YELLOW, Color.BOLD)
     htm = gethtml(link)
     rgx = re.compile('src\s*=\s*"(.+?\.[flv|mp4].*?)"')
     video_links = re.findall(rgx,htm)
@@ -30,15 +66,17 @@ def getflvs(nm, ep_num):
             vid_rgx = re.compile('file\s*:\s*"(.+?\.[flv|mp4].*?)"')
             dwn_link = re.search(vid_rgx,vidhtm).group(1)
             file_name = re.search((r'"filename"\s*:\s*"(.+?\.(flv|mp4))"'),vidhtm).group(1)
-            _dwnfil(dwn_link, file_name = '/home/eadaradhiraj/Videos/'+file_name)
+            _dwnfil(dwn_link, file_name = '~/Videos/'+file_name)
+            sys.exit()
         except Exception,e:
-            logging.error('Unhandled exception: %s', e)
+            printClr('Unhandled exception: '+str(e),Color.RED, Color.BOLD)
             pass
         else:
             break
 
 def _dwnfil(url, file_name="vid"):
     try:
+        printClr("Found!!", Color.GREEN, Color.BOLD)
         u = urllib2.urlopen(url)
         f = open(file_name, 'wb')
         meta = u.info()
@@ -58,18 +96,19 @@ def _dwnfil(url, file_name="vid"):
             print status,
         f.close()
     except KeyboardInterrupt:
-        sys.exit("Interrupted!!!")
+        printClr("\nInterrupted!!!",Color.RED, Color.BOLD)
     except Exception, e:
-        sys.exit("Error in download function " + str(e))
+        printClr("\nError in download function " + str(e), Color.RED, Color.BOLD)
     else:
-        logging.info('Complete')
+        printClr("\nComplete!", Color.GREEN, Color.BOLD)
 
 
 def _Main():
-    nm = raw_input('Enter anime: ')
-    ep_num = raw_input('Enter episode number: ')
-    getflvs(nm, ep_num)
-
+    parser = argparse.ArgumentParser(description='Download anime from animeplus.tv')
+    parser.add_argument('--series', '-s', type=str, help='Enter name of series in quotes')
+    parser.add_argument('--episode', '-e', type=str, help='Give episode number')
+    args = parser.parse_args()
+    get_video_links(nm=args.series, ep_num=args.episode)
 
 if __name__ == '__main__':
     _Main()
