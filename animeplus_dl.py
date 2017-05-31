@@ -123,7 +123,7 @@ def _Main():
     args = parser.parse_args()
     get_video_links(link=args.link)
     '''
-    get_video_links('http://www.animeplus.tv/kimi-no-na-wa.-2016-online', loc='/home/edhiraj/Videos')
+    get_video_links('http://www.animeplus.tv/kimi-no-na-wa.-2016-online', loc='.')
 
 
 if __name__ == '__main__':
