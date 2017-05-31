@@ -30,6 +30,10 @@ def get_video_links(link, loc):
     # ep_num = ep_num.lower()
     # link = 'http://www.animeplus.tv/'+'-'.join(nm.split(' '))+'-episode-'+'-'.join(ep_num.split(' '))+'-online'
     # if not link.startswith(URL): sys.exit('Link does not belong to animeplus.tv')
+    
+    if not os.path.exists(loc):
+        os.mkdir(loc)
+    
     print('Searching \n' + link)
     playlist = 1
 
