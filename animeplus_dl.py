@@ -2,7 +2,7 @@
 # -- coding: utf-8 --
 
 import urllib2
-import time
+import os
 import re
 import sys
 
