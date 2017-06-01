@@ -6,6 +6,7 @@ import urllib2, time, sys, os
 from bs4 import BeautifulSoup
 from google import search
 
+
 # lambda function to create a soup from the html source
 Soup = lambda htm: BeautifulSoup(htm, 'html.parser')
 
@@ -41,32 +42,52 @@ def gethtml(url):
 
 # Seaching for each ebook using google and finding for suitable links and downloadingt those found
 def ebooksearch(ebook_name):
+
     print('Looking for ebook: ' + ebook_name)
+
     if not os.path.exists(ebook_name):
         os.makedirs(ebook_name)
+
     for url in search(query=ebook_name, stop=10):
+
+        print(url)
+
         if url.endswith('.pdf') or url.endswith('.epub') or url.endswith('.mobi'):
+
+            if 'github.com' in url:
+                url = url.replace('blob', 'raw')
+
             try:
-                if 'github.com' in url:
-                    url = url.replace('blob', 'raw')
                 _dwnfil(url, file_name=ebook_name + '/' + url.split('/')[-1])
-            except IndexError:
-                pass
+            except Exception, e:
+                print(url+'\t'+str(e))
+                continue
+
         else:
             try:
                 soup = Soup(gethtml(url))
-                for link in soup.find_all('a', href=True):
-                    for lnk in Soup(gethtml(link['href'])).find_all('a', href=True):
-                        lnk = link['href']
-                        if lnk.endswith('.pdf') or lnk.endswith('.epub') or lnk.endswith('.mobi'):
-                            if 'github.com' in lnk:
-                                lnk = lnk.replace('blob', 'raw')
-                            _dwnfil(lnk, file_name=ebook_name + '/' + lnk.split('/')[-1])
-            except (IndexError, TypeError, ValueError, urllib2.URLError,) as e:
-                pass
+            except Exception, e:
+                print(url+'\t'+str(e))
+                continue
+
+            for link in soup.find_all('a', href=True):
+                try:
+                    for a in Soup(gethtml(link['href'])).find_all('a', href=True):
+                        href = a['href']
+                        try:
+                            if href.endswith('.pdf') or href.endswith('.epub') or href.endswith('.mobi'):
+                                if 'github.com' in href:
+                                    href = href.replace('blob', 'raw')
+                                _dwnfil(href, file_name=ebook_name + '/' + href.split('/')[-1])
+                        except Exception, e:
+                            print(href+'\t'+str(e))
+                            continue
+                except Exception,e:
+                    #print(str(link)+'\t'+str(e))
+                    continue
 
 
 
 # main function which asks for command line arguments
 if __name__ == '__main__':
-    ebooksearch("computer systems a programmer's perspective")
+    ebooksearch("Full Metal Panic Volume 1")
