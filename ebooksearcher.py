@@ -8,7 +8,8 @@ from google import search
 
 
 # lambda function to create a soup from the html source
-Soup = lambda htm: BeautifulSoup(htm, 'html.parser')
+def Soup(htm):
+    return BeautifulSoup(htm, 'html.parser')
 
 # The following function downloas the file using http protocol
 def _dwnfil(url, file_name="ebook"):
