@@ -2,9 +2,10 @@
 # -- coding: utf-8 --
 
 import urllib2
-import os
+import downloads
 import re
 import sys
+import os
 
 URL = "http://www.animeplus.tv"
 
@@ -30,10 +31,10 @@ def get_video_links(link, loc):
     # ep_num = ep_num.lower()
     # link = 'http://www.animeplus.tv/'+'-'.join(nm.split(' '))+'-episode-'+'-'.join(ep_num.split(' '))+'-online'
     # if not link.startswith(URL): sys.exit('Link does not belong to animeplus.tv')
-    
+
     if not os.path.exists(loc):
         os.mkdir(loc)
-    
+
     print('Searching \n' + link)
     playlist = 1
 
@@ -63,7 +64,9 @@ def get_video_links(link, loc):
                                      vidhtm).group(1)
                 file_name = re.search((r'"filename"\s*:\s*"(.+?\.(?:mkv|flv|mp4))"'),
                                       vidhtm).group(1)
-                _dwnfil(dwn_link, file_name=loc + '/' + file_name)
+
+                #fileDownloader.DownloadFile(dwn_link, loc + '/' + file_name).download()
+                downloads.download(url=dwn_link, out_path=loc + '/' + file_name, progress=True)
 
             except KeyboardInterrupt:
                 sys.exit('Cancelled!!')
@@ -80,7 +83,7 @@ def get_video_links(link, loc):
                 # If the link points to an episode,
                 # then stops the script when the download is a success
                 # for any one file
-                if 'episode' in link:
+                if 'episode' or 'ova' in link:
                     return
                 else:
                     pass
@@ -94,29 +97,6 @@ def get_video_links(link, loc):
         return
 
 
-# Code to download the file
-def _dwnfil(url, file_name):
-    print("Found!!")
-    u = urllib2.urlopen(url)
-    f = open(file_name, 'wb')
-    meta = u.info()
-    file_size = int(meta.getheaders("Content-Length")[0])
-    print ("Downloading: %s Bytes: %s" % (file_name, file_size))
-
-    file_size_dl = 0
-    block_sz = 8192
-    while True:
-        buffer = u.read(block_sz)
-        if not buffer:
-            break
-        file_size_dl += len(buffer)
-        f.write(buffer)
-        status = r"%10d  [%3.2f%%]" % (file_size_dl, file_size_dl * 100. / file_size)
-        status = status + chr(8) * (len(status) + 1)
-        print status,
-    f.close()
-
-
 # Main function
 def _Main():
     '''
@@ -127,7 +107,7 @@ def _Main():
     args = parser.parse_args()
     get_video_links(link=args.link)
     '''
-    get_video_links('http://www.animeplus.tv/kimi-no-na-wa.-2016-online', loc='.')
+    get_video_links('http://www.animeplus.tv/oregairu-ova-1-online', loc='/home/edhiraj/Videos')
 
 
 if __name__ == '__main__':
