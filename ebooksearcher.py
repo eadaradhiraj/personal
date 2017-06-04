@@ -6,13 +6,13 @@ import threading
 import urllib2
 import time
 import os
+import sys
 import traceback
 import fileDownloader
 from bs4 import BeautifulSoup
 from google import search
 
 
-# lambda function to create a soup from the html source
 def Soup(htm):
     return BeautifulSoup(htm, 'html.parser')
 
@@ -36,16 +36,16 @@ def search_url (url, folder_name):
             url = url.replace('blob', 'raw')
 
         try:
-            _dwnfil(url, file_name=folder_name + '/' + url.split('/')[-1])
+            _dwnfil(url, file_name='{folder_name}/{link}'.format(folder_name=folder_name,link=url.split('/')[-1]))
         except:
-            traceback.print_exc()
+            #traceback.print_exc()
             return
 
     else:
         try:
             soup = Soup(gethtml(url))
         except:
-            traceback.print_exc()
+            #traceback.print_exc()
             return
 
         for link in soup.find_all('a', href=True):
@@ -54,22 +54,26 @@ def search_url (url, folder_name):
                 if href.endswith('.pdf') or href.endswith('.epub') or href.endswith('.mobi'):
                     if 'github.com' in href:
                         href = href.replace('blob', 'raw')
-                    _dwnfil(href, file_name=folder_name + '/' + href.split('/')[-1])
+                    _dwnfil(href, file_name='{folder_name}/{link}'.format(folder_name=folder_name,link=href.split('/')[-1]))
             except:
-                traceback.print_exc()
+                #traceback.print_exc()
                 continue
 
 # Seaching for each ebook using google and finding for suitable links and downloadingt those found
 def ebooksearch(ebook_name):
 
-    print('Looking for ebook: ' + ebook_name)
+    print('Looking for ebook: {0}'.format(ebook_name))
 
-    folder_name = unicode(ebook_name[:150], errors='replace')
+    #folder_name = unicode(ebook_name[:150], errors='replace')
+    folder_name = ebook_name[:150]
 
     if not os.path.exists(folder_name):
         os.makedirs(folder_name)
 
-    google_search_results = search(query=ebook_name, stop=10)
+    try:
+        google_search_results = search(query=ebook_name, stop=10)
+    except:
+        sys.exit('Google has banned you temporarily!!!')
 
     searchThreads = []
 
