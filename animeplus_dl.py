@@ -7,7 +7,7 @@ import re
 import sys
 import os
 
-URL = "http://www.animeplus.tv"
+URL_BASE = "http://www.animeplus.tv"
 
 # request headers while establishing connection with the url
 request_headers = {
@@ -26,16 +26,15 @@ def gethtml(url):
     ).read()
 
 
-def get_video_links(link, loc):
-    # nm = nm.lower()
-    # ep_num = ep_num.lower()
-    # link = 'http://www.animeplus.tv/'+'-'.join(nm.split(' '))+'-episode-'+'-'.join(ep_num.split(' '))+'-online'
-    # if not link.startswith(URL): sys.exit('Link does not belong to animeplus.tv')
+def get_video_links(link, folder_name):
 
-    if not os.path.exists(loc):
-        os.mkdir(loc)
+    if not link.startswith(URL_BASE):
+        sys.exit('Link does not belong to animeplus.tv')
 
-    print('Searching \n' + link)
+    if not os.path.exists(folder_name):
+        os.mkdir(folder_name)
+
+    print('Searching: {link}'.format(link=link))
     playlist = 1
 
     while True:
@@ -45,7 +44,7 @@ def get_video_links(link, loc):
         # This stops the script if any error occurs while establishing the connction
         # It also stops when the playlist is exceeded
         try:
-            htm = gethtml(link + '/' + str(playlist))
+            htm = gethtml('{link}/{playlist}'.format(link=link, playlist=playlist))
         except:
             sys.exit('Not Found!!!')
 
@@ -59,14 +58,16 @@ def get_video_links(link, loc):
 
             try:
 
-                vidhtm = gethtml(video_link)
-                dwn_link = re.search(r'file\s*:\s*"(.+?\.(?:mkv|flv|mp4).*?)"',
-                                     vidhtm).group(1)
+                video_link_htm = gethtml(video_link)
+                downloadable_link = re.search(r'file\s*:\s*"(.+?\.(?:mkv|flv|mp4).*?)"',
+                                     video_link_htm).group(1)
                 file_name = re.search((r'"filename"\s*:\s*"(.+?\.(?:mkv|flv|mp4))"'),
-                                      vidhtm).group(1)
+                                      video_link_htm).group(1)
 
-                #fileDownloader.DownloadFile(dwn_link, loc + '/' + file_name).download()
-                downloads.download(url=dwn_link, out_path=loc + '/' + file_name, progress=True)
+                downloads.download(url=downloadable_link,
+                                   out_path='{folder_name}/{file_name}'.format(folder_name,file_name),
+                                   progress=True)
+
 
             except KeyboardInterrupt:
                 sys.exit('Cancelled!!')
@@ -94,6 +95,7 @@ def get_video_links(link, loc):
         if errs is not None:
             playlist += 1
             continue
+
         return
 
 
@@ -107,7 +109,7 @@ def _Main():
     args = parser.parse_args()
     get_video_links(link=args.link)
     '''
-    get_video_links('http://www.animeplus.tv/oregairu-ova-1-online', loc='/home/edhiraj/Videos')
+    get_video_links('http://www.animeplus.tv/oregairu-2-ova-online', folder_name='/home/edhiraj/Videos')
 
 
 if __name__ == '__main__':
