@@ -6,6 +6,12 @@ import downloads
 import re
 import sys
 import os
+import logging
+
+logging.basicConfig(level=logging.DEBUG,
+                            format='%(asctime)s [%(funcName)s] %(message)s',
+                    datefmt="%H:%M:%S")
+logger = logging.getLogger(__name__)
 
 URL_BASE = "http://www.animeplus.tv"
 
@@ -26,23 +32,22 @@ def gethtml(url):
     ).read()
 
 
-def get_video_links(link, folder_name):
+def get_video_links(link, loc):
 
     if not link.startswith(URL_BASE):
         sys.exit('Link does not belong to animeplus.tv')
 
-    if not os.path.exists(folder_name):
-        os.mkdir(folder_name)
+    if not os.path.exists(loc):
+        os.mkdir(loc)
 
-    print('Searching: {0}'.format(link))
+    logger.info('Searching: {0}'.format(link))
     playlist = 1
 
     while True:
 
         errs = None
 
-        # This stops the script if any error occurs while establishing the connction
-        # It also stops when the playlist is exceeded
+        # This stops the script if any error occurs while establishing the connection
         try:
             htm = gethtml('{0}/{1}'.format(link,playlist))
         except:
@@ -64,16 +69,23 @@ def get_video_links(link, folder_name):
                 file_name = re.search((r'"filename"\s*:\s*"(.+?\.(?:mkv|flv|mp4))"'),
                                       vidhtm).group(1)
 
-                print ('Found')
-                downloads.download(url=dwn_link, out_path='{0}/{1}'.format(folder_name, file_name), progress=True)
+                #fileDownloader.DownloadFile(dwn_link, loc + '/' + file_name).download()
+                logger.info('Found a downloadable link: \n{0}'.format(dwn_link))
+                downloads.download(url=dwn_link,
+                                   out_path='{0}/{1}'.format(loc, file_name),
+                                   progress=True)
+                logger.info('Downloaded {0}: {1}'.format(file_name, dwn_link))
 
             except KeyboardInterrupt:
-                sys.exit('Cancelled!!')
+                logger.debug('Cancelled by user!')
+                sys.exit()
 
             # If any errors exist,
             # store the errors in a variable
             # then move on to the next link in the playlist
             except Exception as e:
+                logger.debug('Problem downloading from link!')
+                logger.info('Moving on to the next link in the playlist!')
                 if errs is None:
                     errs = e
                 continue
@@ -91,6 +103,8 @@ def get_video_links(link, folder_name):
         # while acquiring links from a playlist
         # move on to the next playlist
         if errs is not None:
+            logger.debug('All downloadable links failed in playlist!')
+            logger.info('Moving on to the next playlist!')
             playlist += 1
             continue
         return
@@ -106,7 +120,7 @@ def _Main():
     args = parser.parse_args()
     get_video_links(link=args.link)
     '''
-    get_video_links('http://www.animeplus.tv/love-hina-episode-2-online', folder_name='/home/edhiraj/Videos')
+    get_video_links('http://www.animeplus.tv/oregairu-ova-1-online', loc='.')
 
 
 if __name__ == '__main__':
