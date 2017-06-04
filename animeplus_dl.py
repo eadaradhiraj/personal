@@ -116,10 +116,11 @@ def _Main():
     import argparse
     parser = argparse.ArgumentParser(description='Download anime from animeplus.tv')
     parser.add_argument('--link', '-l', type=str, help='Enter link which is hosting the video')
-    #parser.add_argument('--episode', '-e', type=str, help='Give episode number')
+    #parser.add_argument('--directory', '-d', type=str, default='.' help='Give folder location')
     args = parser.parse_args()
-    get_video_links(link=args.link)
+    get_video_links(link=args.link, loc=args.directory)
     '''
+
     get_video_links('http://www.animeplus.tv/oregairu-ova-1-online', loc='.')
 
 
