@@ -34,7 +34,7 @@ def get_video_links(link, folder_name):
     if not os.path.exists(folder_name):
         os.mkdir(folder_name)
 
-    print('Searching: {link}'.format(link=link))
+    print('Searching: {0}'.format(link))
     playlist = 1
 
     while True:
@@ -44,7 +44,7 @@ def get_video_links(link, folder_name):
         # This stops the script if any error occurs while establishing the connction
         # It also stops when the playlist is exceeded
         try:
-            htm = gethtml('{link}/{playlist}'.format(link=link, playlist=playlist))
+            htm = gethtml('{0}/{1}'.format(link,playlist))
         except:
             sys.exit('Not Found!!!')
 
@@ -58,16 +58,14 @@ def get_video_links(link, folder_name):
 
             try:
 
-                video_link_htm = gethtml(video_link)
-                downloadable_link = re.search(r'file\s*:\s*"(.+?\.(?:mkv|flv|mp4).*?)"',
-                                     video_link_htm).group(1)
+                vidhtm = gethtml(video_link)
+                dwn_link = re.search(r'file\s*:\s*"(.+?\.(?:mkv|flv|mp4).*?)"',
+                                     vidhtm).group(1)
                 file_name = re.search((r'"filename"\s*:\s*"(.+?\.(?:mkv|flv|mp4))"'),
-                                      video_link_htm).group(1)
+                                      vidhtm).group(1)
 
-                downloads.download(url=downloadable_link,
-                                   out_path='{folder_name}/{file_name}'.format(folder_name,file_name),
-                                   progress=True)
-
+                print ('Found')
+                downloads.download(url=dwn_link, out_path='{0}/{1}'.format(folder_name, file_name), progress=True)
 
             except KeyboardInterrupt:
                 sys.exit('Cancelled!!')
@@ -95,7 +93,6 @@ def get_video_links(link, folder_name):
         if errs is not None:
             playlist += 1
             continue
-
         return
 
 
@@ -109,7 +106,7 @@ def _Main():
     args = parser.parse_args()
     get_video_links(link=args.link)
     '''
-    get_video_links('http://www.animeplus.tv/oregairu-2-ova-online', folder_name='/home/edhiraj/Videos')
+    get_video_links('http://www.animeplus.tv/love-hina-episode-2-online', folder_name='/home/edhiraj/Videos')
 
 
 if __name__ == '__main__':
