@@ -13,14 +13,6 @@ import downloads
 chromedriver = "./chromedriver"
 os.environ["webdriver.chrome.driver"] = chromedriver
 
-request_headers = {
-    "Accept-Language": "en-US,en;q=0.5",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:40.0) Gecko/20100101 Firefox/40.0",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Referer": "http://thewebsite.com",
-    "Connection": "keep-alive"
-}
-
 logging.basicConfig(level=logging.DEBUG,
                             format='%(asctime)s [%(funcName)s] %(message)s',
                     datefmt="%H:%M:%S")
@@ -31,12 +23,6 @@ FILE_HOSTERS = {'rapidvideo':'&s=rapid','openload':'&s=openload'}
 def Soup(htmsrc):
     return BeautifulSoup(htmsrc,
                          'html.parser')
-
-def get_html_norm(url):
-    return urllib2.urlopen(
-        urllib2.Request(url,
-                        headers=request_headers)
-    ).read()
 
 def extract_video_link(url):
     new_soup = Soup(get_html_sel(url))
