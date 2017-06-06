@@ -7,7 +7,6 @@ import logging
 import os
 import traceback
 import re
-import urllib2
 import downloads
 
 chromedriver = "./chromedriver"
