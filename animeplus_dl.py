@@ -7,6 +7,10 @@ import re
 import sys
 import os
 import logging
+import traceback
+from bs4 import BeautifulSoup
+import json
+import itertools
 
 logging.basicConfig(level=logging.DEBUG,
                             format='%(asctime)s [%(funcName)s] %(message)s',
@@ -23,6 +27,9 @@ request_headers = {
     "Referer": "http://thewebsite.com",
     "Connection": "keep-alive"
 }
+
+def Soup(htm):
+    return BeautifulSoup(htm,'html.parser')
 
 # Get html source of url
 def gethtml(url):
@@ -55,26 +62,36 @@ def get_video_links(link, loc):
 
         # Acquires video links with the following exceptions
         # Can add more extensions if necessary
-        video_links = re.findall(
-            r'src\s*=\s*"(.+?\.(?:mkv|flv|mp4).*?)"', htm)
+
+        video_links = [l['src'] for l in Soup(htm).find('div',attrs={'id':'streams'}).find_all('iframe',src=True)]
 
         # Iterates through all video links found in the playlist
         for video_link in video_links:
 
             try:
+                #acquires javascript object from the html link which contains links
+                video_sub_links_dict = json.loads(re.search(r'var\svideo_links\s*\=\s*({.*})\;',
+                                                            gethtml(video_link)).group(1))
 
-                vidhtm = gethtml(video_link)
-                dwn_link = re.search(r'file\s*:\s*"(.+?\.(?:mkv|flv|mp4).*?)"',
-                                     vidhtm).group(1)
-                file_name = re.search((r'"filename"\s*:\s*"(.+?\.(?:mkv|flv|mp4))"'),
-                                      vidhtm).group(1)
+                #iterates through sublinks by going through the javascript object
 
-                #fileDownloader.DownloadFile(dwn_link, loc + '/' + file_name).download()
-                logger.info('Found a downloadable link: \n{0}'.format(dwn_link))
-                downloads.download(url=dwn_link,
-                                   out_path='{0}/{1}'.format(loc, file_name),
-                                   progress=True)
-                logger.info('Downloaded {0}: {1}'.format(file_name, dwn_link))
+                for vid_sub_link in list(itertools.chain.from_iterable(video_sub_links_dict['normal'].values())):
+                    try:
+                        dwn_link = vid_sub_link['link']
+                        file_name = vid_sub_link['filename']
+                        logger.info('Found a downloadable link: \n{0}'.format(dwn_link))
+                        downloads.download(url=dwn_link,
+                                           out_path='{0}/{1}'.format(loc, file_name),
+                                           progress=True)
+                        logger.info('Downloaded {0} to {1}'.format(file_name, loc))
+                        #try any one link and break
+                        break
+                    except:
+                        traceback.print_exc()
+                        logger.info('Moving on to the next sublink')
+                        #if failure occurs move onto the next sublink
+                        continue
+
 
             except KeyboardInterrupt:
                 logger.debug('Cancelled by user!')
@@ -84,6 +101,7 @@ def get_video_links(link, loc):
             # store the errors in a variable
             # then move on to the next link in the playlist
             except Exception as e:
+                traceback.print_exc()
                 logger.debug('Problem downloading from link!')
                 logger.info('Moving on to the next link in the playlist!')
                 if errs is None:
@@ -121,7 +139,7 @@ def _Main():
     get_video_links(link=args.link, loc=args.directory)
     '''
 
-    get_video_links('http://www.animeplus.tv/oregairu-ova-1-online', loc='.')
+    get_video_links('http://www.animeplus.tv/omamori-himari-episode-5-online', loc='.')
 
 
 if __name__ == '__main__':
