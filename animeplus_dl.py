@@ -2,7 +2,6 @@
 # -- coding: utf-8 --
 
 import urllib2
-import downloads
 import re
 import sys
 import os
@@ -28,6 +27,26 @@ request_headers = {
     "Connection": "keep-alive"
 }
 
+def download(url,out_path):
+    u = urllib2.urlopen(url)
+    f = open(out_path, 'wb')
+    meta = u.info()
+    file_size = int(meta.getheaders("Content-Length")[0])
+    print "Downloading: %s Bytes: %s" % (out_path, file_size)
+
+    file_size_dl = 0
+    block_sz = 8192
+    while True:
+        buffer = u.read(block_sz)
+        if not buffer:
+            break
+        file_size_dl += len(buffer)
+        f.write(buffer)
+        status = r"%10d  [%3.2f%%]" % (file_size_dl, file_size_dl * 100. / file_size)
+        status = status + chr(8)*(len(status)+1)
+        print status,
+    f.close()
+
 def Soup(htm):
     return BeautifulSoup(htm,'html.parser')
 
@@ -41,8 +60,10 @@ def gethtml(url):
 
 def get_video_links(link, loc):
 
-    if not link.startswith(URL_BASE):
+    if not 'animeplus.tv' in link:
         sys.exit('Link does not belong to animeplus.tv')
+    if not link.startswith('http://'):
+        link = 'http://{0}'.format(link)
 
     if not os.path.exists(loc):
         os.mkdir(loc)
@@ -65,6 +86,8 @@ def get_video_links(link, loc):
 
         video_links = [l['src'] for l in Soup(htm).find('div',attrs={'id':'streams'}).find_all('iframe',src=True)]
 
+        #print(video_links)
+
         # Iterates through all video links found in the playlist
         for video_link in video_links:
 
@@ -73,29 +96,28 @@ def get_video_links(link, loc):
                 video_sub_links_dict = json.loads(re.search(r'var\svideo_links\s*\=\s*({.*})\;',
                                                             gethtml(video_link)).group(1))
 
-                #iterates through sublinks by going through the javascript object
 
-                for vid_sub_link in list(itertools.chain.from_iterable(video_sub_links_dict['normal'].values())):
+                #iterates through sublinks by going through the javascript object
+                vid_sub_links = list(itertools.chain.from_iterable(video_sub_links_dict['normal'].values()))
+
+                for vid_sub_link in vid_sub_links:
                     try:
                         dwn_link = vid_sub_link['link']
                         file_name = vid_sub_link['filename']
                         logger.info('Found a downloadable link: \n{0}'.format(dwn_link))
-                        downloads.download(url=dwn_link,
-                                           out_path='{0}/{1}'.format(loc, file_name),
-                                           progress=True)
-                        logger.info('Downloaded {0} to {1}'.format(file_name, loc))
-                        #try any one link and break
-                        break
+                        download(url=dwn_link, out_path='{0}/{1}'.format(loc, file_name))
+                        #logger.info('Downloaded {0} to {1}'.format(file_name, loc))
+                        #try any one link and return to outer loop
+                    except KeyboardInterrupt:
+                        logger.debug('Cancelled by user!')
+                        sys.exit()
                     except:
                         traceback.print_exc()
                         logger.info('Moving on to the next sublink')
                         #if failure occurs move onto the next sublink
                         continue
-
-
-            except KeyboardInterrupt:
-                logger.debug('Cancelled by user!')
-                sys.exit()
+                    else:
+                        break
 
             # If any errors exist,
             # store the errors in a variable
@@ -108,14 +130,13 @@ def get_video_links(link, loc):
                     errs = e
                 continue
 
+            # If the link points to an episode,
+            # then stops the script when the download is a success
+            # for any one file
+            if 'movie' in link:
+                continue
             else:
-                # If the link points to an episode,
-                # then stops the script when the download is a success
-                # for any one file
-                if 'episode' or 'ova' in link:
-                    return
-                else:
-                    pass
+                break
 
         # If any exceptions
         # while acquiring links from a playlist
@@ -125,7 +146,8 @@ def get_video_links(link, loc):
             logger.info('Moving on to the next playlist!')
             playlist += 1
             continue
-        return
+        else:
+            break
 
 
 # Main function
@@ -139,7 +161,7 @@ def _Main():
     get_video_links(link=args.link, loc=args.directory)
     '''
 
-    get_video_links('http://www.animeplus.tv/omamori-himari-episode-5-online', loc='.')
+    get_video_links('http://www.animeplus.tv/oreimo-episode-1-online', loc='.')
 
 
 if __name__ == '__main__':
